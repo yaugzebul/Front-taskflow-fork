@@ -2,7 +2,8 @@
 import { TaskDetailModal } from "@/components/modal/task_detail_modal";
 import { useState } from "react";
 
-export function YourPageComponent() {
+// Renommé en Kanban et exporté par défaut pour correspondre à App.jsx
+const Kanban = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Exemple de données de tâche
@@ -33,3 +34,5 @@ export function YourPageComponent() {
         </div>
     );
 }
+
+export default Kanban;
