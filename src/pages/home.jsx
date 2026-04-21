@@ -1,5 +1,6 @@
 import Footer from '/src/components/footer/footer.jsx';
 import React, { useState } from "react";
+<<<<<<< main
 import { Link, useNavigate } from "react-router-dom"; // Importez useNavigate
 import { Button } from "@/components/ui/button";
 import { useAuth } from '../contexte/AuthContext'; // Importez useAuth
@@ -9,9 +10,23 @@ const Home = () => {
     const [password, setPassword] = useState("");
     const { login } = useAuth(); // Utilisez le hook useAuth pour obtenir la fonction login
     const navigate = useNavigate(); // Initialisez useNavigate
+=======
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { toast } from 'sonner';
+import { login } from '../services/authService';
 
-    const handleLogin = (e) => {
+const Home = () => {
+    // État local pour le formulaire
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const navigate = useNavigate();
+>>>>>>> main
+
+    const handleLogin = async (e) => {
         e.preventDefault();
+<<<<<<< main
         // Ici, vous feriez normalement un appel API pour authentifier l'utilisateur
         // Pour cet exemple, nous simulons une connexion réussie
         if (email === "test@example.com" && password === "password") {
@@ -20,6 +35,36 @@ const Home = () => {
             navigate("/dashboard"); // Redirige vers le tableau de bord
         } else {
             alert("Identifiants incorrects. Utilisez test@example.com / password");
+=======
+        
+        // Simple validation locale
+        if (!email || !password) {
+            toast.error("Veuillez remplir tous les champs.");
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            // Appel à l'API de login
+            const responseData = await login(email, password);
+            
+            // Si la connexion réussit, on peut par exemple stocker un token si le backend en renvoie un
+            if (responseData.token) {
+                localStorage.setItem('token', responseData.token);
+            }
+            
+            toast.success("Connexion réussie !");
+            
+            // Redirection vers le dashboard
+            navigate("/dashboard");
+
+        } catch (error) {
+            // Si l'erreur provient du backend, authService la gère et renvoie le message
+            toast.error(error.message || "Email ou mot de passe incorrect.");
+            console.error("Échec de la connexion:", error);
+        } finally {
+            setIsLoading(false);
+>>>>>>> main
         }
     };
 
@@ -51,10 +96,11 @@ const Home = () => {
                                         id="email"
                                         type="email" 
                                         placeholder="nom@exemple.com"
-                                        className="w-full px-4 py-3 rounded-lg  border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition-all"
+                                        className="w-full px-4 py-3 rounded-lg  border border-slate-700 text-tf-dark-bg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition-all"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
+                                        disabled={isLoading}
                                     />
                                 </div>
                                 
@@ -71,10 +117,11 @@ const Home = () => {
                                         id="password"
                                         type="password" 
                                         placeholder="••••••••"
-                                        className="w-full px-4 py-3 rounded-lg border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition-all"
+                                        className="w-full px-4 py-3 rounded-lg border border-slate-700 text-tf-dark-bg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition-all"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
+                                        disabled={isLoading}
                                     />
                                 </div>
 
@@ -83,8 +130,9 @@ const Home = () => {
                                     type="submit"
                                     variant="amber"
                                     className="w-full py-3 px-4 shadow-lg shadow-amber-500/20"
+                                    disabled={isLoading}
                                 >
-                                    Se connecter
+                                    {isLoading ? "Connexion en cours..." : "Se connecter"}
                                 </Button>
                             </form>
 

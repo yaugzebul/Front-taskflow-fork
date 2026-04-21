@@ -1,11 +1,24 @@
 // Dans votre composant de page (par exemple, une liste de tâches)
-import { TaskDetailModal } from "@/components/modal/task_detail_modal";
+import React, { useState } from "react";
 import { TaskCard } from "@/components/kanban/TaskCard";
-import { useState } from "react";
+import Sidebar from "@/components/Sidebar/Sidebar.jsx";
+import KanbanHeader from "@/components/kanban/KanbanHeader.jsx";
+
+
+const mockProjects = [
+    { id: 1, name: "Refonte Site Web", status: "En cours", progress: 65, tasks: 12, lastUpdated: "2h" },
+    { id: 2, name: "Application Mobile", status: "À faire", progress: 10, tasks: 45, lastUpdated: "1j" },
+    { id: 3, name: "Campagne Marketing", status: "Terminé", progress: 100, tasks: 8, lastUpdated: "3j" },
+];
 
 const Kanban = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+    // Filtrage des projets basé sur la barre de recherche
+    const filteredProjects = mockProjects.filter(p =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
     // Exemple de données de tâche
     const selectedTask = {
         title: "Développer la nouvelle fonctionnalité",
@@ -19,19 +32,24 @@ const Kanban = () => {
     };
 
     return (
-        <div>
-            <h1>Kanban</h1>
-            < TaskCard/>
-            {/* ouvrir modal */}
-            <button onClick={() => setIsModalOpen(true)}>
-                Voir les détails de la tâche
-            </button>
-            <TaskCard task={selectedTask} />
-            <TaskDetailModal
-                isOpen={isModalOpen}
-                onOpenChange={setIsModalOpen}
-                task={selectedTask}
-            />
+        <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
+            {/* --- SIDEBAR GAUCHE --- */}
+            <Sidebar projects={ mockProjects } />
+
+            {/* --- CONTENU PRINCIPAL --- */}
+            <main className="flex-1 flex flex-col h-full overflow-hidden">
+
+                <KanbanHeader
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    isCreateModalOpen={ isCreateModalOpen }
+                    setIsCreateModalOpen={ setIsCreateModalOpen }
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-8">
+                     <TaskCard task={selectedTask} />
+                </div>
+                </main>
         </div>
     );
 }

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, FolderKanban, Settings, ChevronDown, ChevronRight, Plus } from 'lucide-react';
-import { CreateProjectModal } from '../modal/create_project_modal';
+import { LayoutDashboard, FolderKanban, Settings, ChevronDown, ChevronRight } from 'lucide-react';
 
 const Sidebar = ({ projects = [] }) => {
     const [isProjectsOpen, setIsProjectsOpen] = useState(true);
@@ -43,19 +42,14 @@ const Sidebar = ({ projects = [] }) => {
                         <div className="space-y-1">
                             {projects.map((project) => (
                                 <Link
-                                    key={project.id}
-                                    to={`/kanban/${project.id}`}
+                                    key={project.id_project}
+                                    to={`/kanban/${project.id_project}`}
                                     className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors pl-8"
                                 >
                                     <FolderKanban size={16} />
-                                    <span className="truncate">{project.name}</span>
+                                    <span className="truncate">{project.project_name}</span>
                                 </Link>
                             ))}
-                            
-                            {/* Le bouton de création de la sidebar intègre directement la modale */}
-                            <div className="pl-3 mt-2">
-                                <CreateProjectModal />
-                            </div>
                         </div>
                     )}
                 </div>
