@@ -1,12 +1,12 @@
 import Footer from '/src/components/footer/footer.jsx';
-import React, { useState, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const Home = () => {
     // État local pour le formulaire (à relier plus tard à l'authentification)
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const navigate = useNavigate();
 
     const handleLogin = (e) => {
         e.preventDefault();
@@ -70,12 +70,14 @@ const Home = () => {
                                     />
                                 </div>
 
-                                <button 
+                                {/* Utilisation du Button Shadcn avec la variante amber */}
+                                <Button 
                                     type="submit"
-                                    className="w-full py-3 px-4 bg-amber-400 hover:bg-amber-200 text-slate-900 font-bold rounded-lg transition-colors duration-300 shadow-lg shadow-amber-500/20"
+                                    variant="amber"
+                                    className="w-full py-3 px-4 shadow-lg shadow-amber-500/20"
                                 >
                                     Se connecter
-                                </button>
+                                </Button>
                             </form>
 
                             {/* Lien Inscription */}

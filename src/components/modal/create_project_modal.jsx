@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { toast } from "sonner"
+import { Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -26,8 +27,7 @@ import {
     InputGroupTextarea,
 } from "@/components/ui/input-group"
 
-export function CreateProjectModal() {
-    const [isOpen, setIsOpen] = React.useState(false)
+export function CreateProjectModal({ isOpen, setIsOpen }) {
     const [projectName, setProjectName] = React.useState("")
     const [projectDescription, setProjectDescription] = React.useState("")
 
@@ -58,13 +58,18 @@ export function CreateProjectModal() {
         // Reset form and close modal
         setProjectName("")
         setProjectDescription("")
-        setIsOpen(false)
+        if (setIsOpen) setIsOpen(false)
     }
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button>Create Project</Button>
+                {/* On utilise maintenant le composant Button de Shadcn avec notre nouvelle variante 'amber' */}
+                <Button variant="amber" className="gap-2 w-full justify-start md:justify-center md:w-auto">
+                    <Plus size={16} />
+                    <span className="hidden sm:inline">Nouveau projet</span>
+                    <span className="sm:hidden">Créer</span>
+                </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
@@ -108,7 +113,7 @@ export function CreateProjectModal() {
                     </FieldGroup>
                 </form>
                 <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+                    <Button type="button" variant="outline" onClick={() => setIsOpen && setIsOpen(false)}>
                         Cancel
                     </Button>
                     <Button type="submit" form="create-project-form">
