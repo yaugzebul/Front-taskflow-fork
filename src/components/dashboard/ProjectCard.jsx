@@ -23,9 +23,14 @@ const ProjectCard = ({ project }) => {
     const progress = project.progress || 0;
     const taskCount = project.tasks || 0;
 
+    // Utilise id_project en priorité, ou 'new' en fallback
+    const projectId = project.id_project || 'new';
+    const projectName = project.project_name || project.name || 'Nouveau projet';
+    const projectDesc = project.project_desc || project.description || 'Description non disponible';
+
     return (
         // On enveloppe la carte d'un lien vers la page Kanban du projet
-        <Link to={`/kanban/${project.id_project}`} className="block">
+        <Link to={`/kanban/${projectId}`} className="block">
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-amber-300/50 transition-all p-6 flex flex-col h-full group cursor-pointer relative overflow-hidden">
                 {/* Effet visuel discret au survol */}
                 <div className="absolute top-0 left-0 w-1 h-full bg-amber-400 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
@@ -44,11 +49,11 @@ const ProjectCard = ({ project }) => {
                 </div>
                 
                 <h3 className="text-lg font-bold text-slate-800 mb-2 font-raleway group-hover:text-amber-600 transition-colors relative z-10 line-clamp-1">
-                    {project.project_name}
+                    {projectName}
                 </h3>
                 
                 <p className="text-sm text-slate-500 mb-4 line-clamp-2 min-h-[40px]">
-                    {project.project_desc}
+                    {projectDesc}
                 </p>
                 
                 <div className="flex items-center text-xs text-slate-500 mb-6 gap-4 relative z-10">

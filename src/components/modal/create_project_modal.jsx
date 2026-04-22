@@ -44,21 +44,22 @@ export function CreateProjectModal({ isOpen, setIsOpen, onSuccess }) {
             return
         }
 
+        // On adapte les clés au format attendu par la BDD (project_name, project_desc)
         const projectData = {
-            name: projectName,
-            description: projectDescription,
+            project_name: projectName,
+            project_desc: projectDescription,
         }
 
         setIsSubmitting(true)
         try {
             // Appel à l'API
-            const newProject = await createProject(projectData)
+            await createProject(projectData)
             
             toast.success("Projet créé avec succès !")
             
-            // Si le composant parent a fourni une fonction de callback, on l'appelle
+            // On déclenche le rafraîchissement complet des données dans le Dashboard
             if (onSuccess) {
-                onSuccess(newProject)
+                onSuccess()
             }
 
             // Reset form and close modal
@@ -76,12 +77,14 @@ export function CreateProjectModal({ isOpen, setIsOpen, onSuccess }) {
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                {/* On utilise maintenant le composant Button de Shadcn avec notre nouvelle variante 'amber' */}
-                <Button variant="amber" className="gap-2 w-full justify-start md:justify-center md:w-auto">
-                    <Plus size={16} />
-                    <span className="hidden sm:inline">Nouveau projet</span>
-                    <span className="sm:hidden">Créer</span>
-                </Button>
+                {/* On enveloppe le Button dans un div pour éviter le warning React "button descendant of button" */}
+                <div className="inline-block">
+                    <Button variant="amber" className="gap-2 w-full justify-start md:justify-center md:w-auto pointer-events-none">
+                        <Plus size={16} />
+                        <span className="hidden sm:inline">Nouveau projet</span>
+                        <span className="sm:hidden">Créer</span>
+                    </Button>
+                </div>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>

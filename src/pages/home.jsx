@@ -2,20 +2,21 @@ import Footer from '/src/components/footer/footer.jsx';
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from '../contexte/AuthContext';
+// On renomme l'import pour ne pas confondre avec la fonction login de AuthContext
+import { login as loginService } from '../services/authService'; 
 import { toast } from 'sonner';
-import { login } from '../services/authService';
 
 const Home = () => {
-    // État local pour le formulaire
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const { login } = useAuth(); // login du contexte pour mettre à jour l'état global
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
         e.preventDefault();
         
-        // Simple validation locale
         if (!email || !password) {
             toast.error("Veuillez remplir tous les champs.");
             return;
@@ -23,22 +24,21 @@ const Home = () => {
 
         setIsLoading(true);
         try {
-            // Appel à l'API de login
-            const responseData = await login(email, password);
+            // 1. Appel à la vraie API via le service (qui fait le fetch POST)
+            const responseData = await loginService(email, password);
             
-            // Si la connexion réussit, on peut par exemple stocker un token si le backend en renvoie un
-            if (responseData.token) {
-                localStorage.setItem('token', responseData.token);
-            }
+            // 2. Si succès, on passe les données utilisateur au contexte d'authentification
+            // L'API renvoie { message: 'Connexion réussie', user: { id_user, user_email, user_first_name, user_name } }
+            const userData = responseData.user || { email }; 
+            login(userData); // Met à jour 'isAuthenticated' à true dans ProtectedRoute
             
             toast.success("Connexion réussie !");
             
-            // Redirection vers le dashboard
+            // 3. Redirection vers le dashboard
             navigate("/dashboard");
 
         } catch (error) {
-            // Si l'erreur provient du backend, authService la gère et renvoie le message
-            toast.error(error.message || "Email ou mot de passe incorrect.");
+            toast.error(error.message || "Identifiants incorrects.");
             console.error("Échec de la connexion:", error);
         } finally {
             setIsLoading(false);
