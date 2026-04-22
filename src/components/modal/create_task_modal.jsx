@@ -63,7 +63,7 @@ export function CreateTaskModal() {
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button>Create Task</Button>
+                <Button variant="secondary">Create Task</Button>
             </DialogTrigger>
             <DialogContent className="w-full max-w-xl border-none shadow-2xl rounded-2xl p-0 overflow-hidden">
                 <DialogHeader className="flex flex-row items-center justify-between border-b border-slate-50 px-6 py-4">

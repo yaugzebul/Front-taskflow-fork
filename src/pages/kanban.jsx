@@ -1,14 +1,13 @@
-// Dans votre composant de page (par exemple, une liste de tâches)
 import React, { useState } from "react";
-import { TaskCard } from "@/components/kanban/TaskCard";
 import Sidebar from "@/components/Sidebar/Sidebar.jsx";
 import KanbanHeader from "@/components/kanban/KanbanHeader.jsx";
+import { Board } from "@/components/kanban/board.jsx";
 
-
+// Ce que la Sidebar attend
 const mockProjects = [
-    { id: 1, name: "Refonte Site Web", status: "En cours", progress: 65, tasks: 12, lastUpdated: "2h" },
-    { id: 2, name: "Application Mobile", status: "À faire", progress: 10, tasks: 45, lastUpdated: "1j" },
-    { id: 3, name: "Campagne Marketing", status: "Terminé", progress: 100, tasks: 8, lastUpdated: "3j" },
+    { id_project: 1, project_name: "Refonte Site Web", status: "En cours", progress: 65, tasks: 12, lastUpdated: "2h" },
+    { id_project: 2, project_name: "Application Mobile", status: "À faire", progress: 10, tasks: 45, lastUpdated: "1j" },
+    { id_project: 3, project_name: "Campagne Marketing", status: "Terminé", progress: 100, tasks: 8, lastUpdated: "3j" },
 ];
 
 const Kanban = () => {
@@ -17,26 +16,13 @@ const Kanban = () => {
 
     // Filtrage des projets basé sur la barre de recherche
     const filteredProjects = mockProjects.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase())
+        p.project_name.toLowerCase().includes(searchQuery.toLowerCase())
     );
-    // Exemple de données de tâche
-    const selectedTask = {
-        title: "Développer la nouvelle fonctionnalité",
-        priority: "Élevée",
-        status: "À faire",
-        description: "Implémenter la fonctionnalité X comme décrit dans le cahier des charges.",
-        assignedTo: "Jane Doe",
-        dueDate: "30 mars 2024",
-        timeSpent: 0,
-        timeEstimated: 16,
-    };
 
     return (
         <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
-            {/* --- SIDEBAR GAUCHE --- */}
-            <Sidebar projects={ mockProjects } />
+            <Sidebar projects={ filteredProjects } /> {/* Utilisation des projets filtrés */}
 
-            {/* --- CONTENU PRINCIPAL --- */}
             <main className="flex-1 flex flex-col h-full overflow-hidden">
 
                 <KanbanHeader
@@ -46,10 +32,10 @@ const Kanban = () => {
                     setIsCreateModalOpen={ setIsCreateModalOpen }
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-8">
-                     <TaskCard task={selectedTask} />
+                <div className="flex-1 overflow-auto"> {/* Ajout d'un conteneur scrollable pour le board */}
+                    <Board />
                 </div>
-                </main>
+            </main>
         </div>
     );
 }
