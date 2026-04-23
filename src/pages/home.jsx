@@ -14,6 +14,13 @@ const Home = () => {
     const { setAuthData } = useAuth(); // Utilise la nouvelle fonction setAuthData
     const navigate = useNavigate();
 
+    // Rediriger si on est déjà connecté (en utilisant useEffect pour éviter l'erreur render)
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate("/dashboard", { replace: true });
+        }
+    }, [isAuthenticated, navigate]);
+
     const handleLogin = async (e) => {
         e.preventDefault();
         
