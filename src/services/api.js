@@ -63,9 +63,9 @@ export const createTask = (taskData) => apiFetch('/api/taches', {
     method: 'POST',
     body: JSON.stringify(taskData),
 });
-export const updateTaskStatus = (taskId, newColId) => apiFetch(`/api/taches/${taskId}`, {
+export const updateTaskStatus = (taskId, newStatus) => apiFetch(`/api/taches/${taskId}`, {
     method: 'PUT',
-    body: JSON.stringify({ id_col: newColId }),
+    body: JSON.stringify({ status: newStatus }),
 });
 export const deleteTask = (taskId) => apiFetch(`/api/taches/${taskId}`, {
     method: 'DELETE',

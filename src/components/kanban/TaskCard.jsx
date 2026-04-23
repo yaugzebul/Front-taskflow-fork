@@ -14,7 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { TaskDetailModal } from "@/components/modal/task_detail_modal";
 
 export function TaskCard ({ id, task, onTaskDeleted }) {
-    const { attributes, listeners, setNodeRef, transform, transition,isDragging } = useSortable({
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id:id,
         data: {
             type: 'TASK',
@@ -22,12 +22,11 @@ export function TaskCard ({ id, task, onTaskDeleted }) {
         },
     });
     const [isModalOpen, setIsModalOpen] = useState(false);
+    
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        position: "relative",
-        zIndex: isDragging ? 10 : 1,
-        opacity: isDragging ? 0.5 : 1,
+        opacity: isDragging ? 0 : 1, // Changement ici : opacité à 0 quand isDragging est vrai
     }
 
     if (!task)
