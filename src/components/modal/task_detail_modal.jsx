@@ -2,6 +2,9 @@
 
 import * as React from "react"
 import { Calendar, Clock, Flag, Trash2, User, X } from "lucide-react"
+import { toast } from "sonner"
+import { useAuth } from "@/contexte/AuthContext" // Import du hook d'authentification
+import { deleteTask } from "@/services/api" // Import du service API
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -13,23 +16,10 @@ import {
 } from "@/components/ui/dialog"
 import { Progress } from "@/components/ui/progress"
 
-/**
- * A modal component to display the details of a task.
- *
- * @param {object} props - The component props.
- * @param {boolean} props.isOpen - Whether the modal is open.
- * @param {function} props.onOpenChange - Function to call when the modal's open state changes.
- * @param {object} props.task - The task object to display.
- * @param {string} props.task.title - The title of the task.
- * @param {string} props.task.priority - The priority of the task (e.g., "Moyenne").
- * @param {string} props.task.status - The status of the task (e.g., "En cours").
- * @param {string} props.task.description - The description of the task.
- * @param {string} props.task.assignedTo - The name of the person the task is assigned to.
- * @param {string} props.task.dueDate - The due date of the task.
- * @param {number} props.task.timeSpent - The time spent on the task in hours.
- * @param {number} props.task.timeEstimated - The estimated time for the task in hours.
- */
-export function TaskDetailModal({ isOpen, onOpenChange, task }) {
+export function TaskDetailModal({ isOpen, onOpenChange, task, onTaskDeleted }) {
+    const { user } = useAuth(); // Récupère l'utilisateur connecté
+    const isProjectAdmin = user?.id_role === 1; // Vérifie si l'utilisateur est admin (id_role = 1)
+
     if (!task) {
         return null
     }
@@ -37,10 +27,27 @@ export function TaskDetailModal({ isOpen, onOpenChange, task }) {
     const progressPercentage =
         task.timeEstimated > 0 ? (task.timeSpent / task.timeEstimated) * 100 : 0
 
+    const handleDelete = async () => {
+        if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette tâche ?")) {
+            return;
+        }
+
+        try {
+            await deleteTask(task.id); // Appel au service API pour supprimer la tâche
+            toast.success("Tâche supprimée avec succès !");
+            onOpenChange(false); // Ferme la modale
+            if (onTaskDeleted) {
+                onTaskDeleted(task.id); // Notifie le parent de la suppression
+            }
+        } catch (error) {
+            toast.error(`Erreur lors de la suppression de la tâche : ${error.message}`);
+            console.error("Failed to delete task:", error);
+        }
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="w-full max-w-2xl border-none shadow-lg p-0">
-                {/* Header avec Titre et Actions */}
                 <DialogHeader className="space-y-4 p-6 pb-4">
                     <div className="flex justify-between items-start">
                         <div className="space-y-3">
@@ -68,14 +75,16 @@ export function TaskDetailModal({ isOpen, onOpenChange, task }) {
                             <Button variant="secondary" size="sm" className="h-8">
                                 Modifier
                             </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-slate-400"
-                            >
-                                <Trash2 size={18} />
-                            </Button>
-                            {/* Le bouton X de la DialogContent est déjà présent, mais on garde celui-ci pour le style */}
+                            {isProjectAdmin && ( // Affiche le bouton de suppression seulement si l'utilisateur est admin
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-slate-400 hover:text-red-500"
+                                    onClick={handleDelete}
+                                >
+                                    <Trash2 size={18} />
+                                </Button>
+                            )}
                             <Button
                                 variant="ghost"
                                 size="icon"
