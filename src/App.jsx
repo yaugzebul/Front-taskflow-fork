@@ -19,8 +19,8 @@ function App() {
 
             {/* Pages principales de l'application (protégées) */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            {/* Ajout du paramètre :id pour la route kanban */}
-            <Route path="/kanban/:id" element={<ProtectedRoute><Kanban /></ProtectedRoute>} />
+            {/* Correction du paramètre de la route kanban */}
+            <Route path="/kanban/:projectId" element={<ProtectedRoute><Kanban /></ProtectedRoute>} />
             <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
 
             {/* Pages d'information et légales (liens du footer) */}

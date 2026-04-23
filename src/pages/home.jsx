@@ -1,5 +1,5 @@
 import Footer from '/src/components/footer/footer.jsx';
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '../contexte/AuthContext';
@@ -11,10 +11,9 @@ const Home = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const { setAuthData } = useAuth(); // Utilise la nouvelle fonction setAuthData
+    const { setAuthData, isAuthenticated } = useAuth();
     const navigate = useNavigate();
 
-    // Rediriger si on est déjà connecté (en utilisant useEffect pour éviter l'erreur render)
     useEffect(() => {
         if (isAuthenticated) {
             navigate("/dashboard", { replace: true });
@@ -32,10 +31,10 @@ const Home = () => {
         setIsLoading(true);
         try {
             const credentials = { email: email, Mot_de_passe: password };
-            const authData = await loginUser(credentials); // 1. Appel à l'API
+            const authData = await loginUser(credentials);
             
             if (authData && authData.user && authData.token) {
-                setAuthData(authData); // 2. Mise à jour de l'état global (plus d'appel API ici)
+                setAuthData(authData);
                 toast.success("Connexion réussie !");
                 navigate("/dashboard");
             } else {
@@ -114,7 +113,10 @@ const Home = () => {
                                 </Button>
                             </form>
 
-                            <RegisterModal />
+                            <div className="text-center text-sm text-tf-text-light pt-4">
+                                Pas encore de compte ?{' '}
+                                <RegisterModal />
+                            </div>
                         </div>
                     </div>
 

@@ -3,11 +3,10 @@ import Sidebar from '../components/Sidebar/Sidebar';
 import ProjectCard from '../components/dashboard/ProjectCard';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import EmptyProjectState from '../components/dashboard/EmptyProjectState';
-import { fetchProjects } from '../services/projectService';
+import { getProjects } from '../services/api'; // Utilisation du service API centralisé
 import { toast } from 'sonner';
 
 const Dashboard = () => {
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [projects, setProjects] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -16,14 +15,10 @@ const Dashboard = () => {
     const loadProjects = async () => {
         try {
             setIsLoading(true);
-            const data = await fetchProjects();
+            const data = await getProjects(); // Appel via le service API centralisé
             
-            // On s'assure que l'API renvoie bien un tableau, sinon on met un tableau vide par sécurité
             if (Array.isArray(data)) {
                 setProjects(data);
-            } else if (data.projects && Array.isArray(data.projects)) {
-                // Au cas où l'API renverrait { projects: [...] }
-                setProjects(data.projects);
             } else {
                 setProjects([]);
             }
@@ -43,9 +38,6 @@ const Dashboard = () => {
 
     // Fonction pour recharger complètement la liste après création
     const handleProjectCreated = () => {
-        // Au lieu d'ajouter manuellement un faux objet à l'état,
-        // on refait un appel API pour récupérer la liste exacte et à jour depuis la BDD.
-        // Cela garantit que toutes les données (ID auto-incrémenté, dates générées par SQL, etc.) sont correctes.
         loadProjects();
     };
 
@@ -60,8 +52,6 @@ const Dashboard = () => {
                 
                 {/* --- HEADER DU DASHBOARD --- */}
                 <DashboardHeader 
-                    isCreateModalOpen={isCreateModalOpen}
-                    setIsCreateModalOpen={setIsCreateModalOpen}
                     onProjectCreated={handleProjectCreated}
                 />
 
@@ -90,7 +80,6 @@ const Dashboard = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-8">
                             {projects.length > 0 ? (
                                 projects.map((project, index) => {
-                                    // Utilisation d'une clé fallback sécurisée si id_project est absent
                                     const key = project.id_project || `project-${index}`;
                                     return <ProjectCard key={key} project={project} />;
                                 })

@@ -63,17 +63,17 @@ export const createTask = (taskData) => apiFetch('/api/taches', {
     method: 'POST',
     body: JSON.stringify(taskData),
 });
-export const updateTaskStatus = (taskId, newStatus) => apiFetch(`/api/taches/${taskId}/status`, {
-    method: 'PATCH',
-    body: JSON.stringify({ status: newStatus }),
+export const updateTaskStatus = (taskId, newColId) => apiFetch(`/api/taches/${taskId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ id_col: newColId }),
 });
 export const deleteTask = (taskId) => apiFetch(`/api/taches/${taskId}`, {
     method: 'DELETE',
 });
 
 // --- Projets ---
-export const getProjects = () => apiFetch('/api/projets');
-export const createProject = (projectData) => apiFetch('/api/projets', {
+export const getProjects = () => apiFetch('/api/projects'); // Correction de la route
+export const createProject = (projectData) => apiFetch('/api/projects', { // Correction de la route
     method: 'POST',
     body: JSON.stringify(projectData),
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import Sidebar from "@/components/Sidebar/Sidebar.jsx";
 import KanbanHeader from "@/components/kanban/KanbanHeader.jsx";
@@ -9,7 +9,7 @@ const Kanban = () => {
     const { projectId } = useParams();
     const [projects, setProjects] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
-    const [refreshKey, setRefreshKey] = useState(0); // Clé pour forcer le rafraîchissement
+    const boardRef = useRef(null); // Création de la ref pour le Board
 
     useEffect(() => {
         const fetchProjects = async () => {
@@ -23,9 +23,11 @@ const Kanban = () => {
         fetchProjects();
     }, []);
 
-    const handleTaskCreated = () => {
-        // Incrémenter la clé pour forcer le useEffect du Board à se redéclencher
-        setRefreshKey(oldKey => oldKey + 1);
+    // La fonction reçoit maintenant la nouvelle tâche et la passe au Board via la ref
+    const handleTaskCreated = (newTask) => {
+        if (boardRef.current) {
+            boardRef.current.addTask(newTask);
+        }
     };
 
     const filteredProjects = projects.filter(p =>
@@ -45,7 +47,8 @@ const Kanban = () => {
                 />
 
                 <div className="flex-1 overflow-auto">
-                    <Board projectId={projectId} refreshKey={refreshKey} />
+                    {/* La ref est maintenant passée au composant Board */}
+                    <Board ref={boardRef} projectId={projectId} />
                 </div>
             </main>
         </div>

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { toast } from "sonner"
-import { Plus } from "lucide-react"
+import { createProject } from "@/services/api" // Utilisation du service API centralisé
 
 import { Button } from "@/components/ui/button"
 import {
@@ -27,10 +27,8 @@ import {
     InputGroupTextarea,
 } from "@/components/ui/input-group"
 
-import { createProject } from "../../services/projectService"
-
-// Ajout de la prop onSuccess pour mettre à jour la liste dans le parent
-export function CreateProjectModal({ isOpen, setIsOpen, onSuccess }) {
+export function CreateProjectModal({ onProjectCreated, children }) {
+    const [isOpen, setIsOpen] = React.useState(false)
     const [projectName, setProjectName] = React.useState("")
     const [projectDescription, setProjectDescription] = React.useState("")
     const [isSubmitting, setIsSubmitting] = React.useState(false)
@@ -38,13 +36,11 @@ export function CreateProjectModal({ isOpen, setIsOpen, onSuccess }) {
     async function handleSubmit(event) {
         event.preventDefault()
 
-        // Simple validation
         if (projectName.length < 3) {
-            toast.error("Project name must be at least 3 characters.")
+            toast.error("Le nom du projet doit faire au moins 3 caractères.")
             return
         }
 
-        // On adapte les clés au format attendu par la BDD (project_name, project_desc)
         const projectData = {
             project_name: projectName,
             project_desc: projectDescription,
@@ -52,22 +48,18 @@ export function CreateProjectModal({ isOpen, setIsOpen, onSuccess }) {
 
         setIsSubmitting(true)
         try {
-            // Appel à l'API
             await createProject(projectData)
-            
             toast.success("Projet créé avec succès !")
             
-            // On déclenche le rafraîchissement complet des données dans le Dashboard
-            if (onSuccess) {
-                onSuccess()
+            if (onProjectCreated) {
+                onProjectCreated()
             }
 
-            // Reset form and close modal
             setProjectName("")
             setProjectDescription("")
-            if (setIsOpen) setIsOpen(false)
+            setIsOpen(false)
         } catch (error) {
-            toast.error("Erreur lors de la création du projet.")
+            toast.error(`Erreur lors de la création du projet: ${error.message}`)
             console.error(error)
         } finally {
             setIsSubmitting(false)
@@ -77,45 +69,38 @@ export function CreateProjectModal({ isOpen, setIsOpen, onSuccess }) {
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                {/* On enveloppe le Button dans un div pour éviter le warning React "button descendant of button" */}
-                <div className="inline-block">
-                    <Button variant="amber" className="gap-2 w-full justify-start md:justify-center md:w-auto pointer-events-none">
-                        <Plus size={16} />
-                        <span className="hidden sm:inline">Nouveau projet</span>
-                        <span className="sm:hidden">Créer</span>
-                    </Button>
-                </div>
+                {children}
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Create a new project</DialogTitle>
+                    <DialogTitle>Créer un nouveau projet</DialogTitle>
                     <DialogDescription>
-                        Fill in the details below to start a new project.
+                        Remplissez les détails ci-dessous pour démarrer un nouveau projet.
                     </DialogDescription>
                 </DialogHeader>
                 <form id="create-project-form" onSubmit={handleSubmit}>
                     <FieldGroup>
                         <Field>
-                            <FieldLabel htmlFor="project-name">Project Name</FieldLabel>
+                            <FieldLabel htmlFor="project-name">Nom du projet</FieldLabel>
                             <Input
                                 id="project-name"
                                 value={projectName}
                                 onChange={(e) => setProjectName(e.target.value)}
-                                placeholder="My awesome project"
+                                placeholder="Mon projet génial"
                                 autoComplete="off"
                                 disabled={isSubmitting}
                             />
                         </Field>
                         <Field>
                             <FieldLabel htmlFor="project-description">
-                                Description (Optional)
+                                Description (Optionnel)
                             </FieldLabel>
                             <InputGroup>
                                 <InputGroupTextarea
                                     id="project-description"
                                     value={projectDescription}
                                     onChange={(e) => setProjectDescription(e.target.value)}
-                                    placeholder="A short description of what this project is about."
+                                    placeholder="Une courte description de ce projet."
                                     rows={4}
                                     className="min-h-20 resize-none"
                                     disabled={isSubmitting}
@@ -130,11 +115,11 @@ export function CreateProjectModal({ isOpen, setIsOpen, onSuccess }) {
                     </FieldGroup>
                 </form>
                 <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setIsOpen && setIsOpen(false)} disabled={isSubmitting}>
-                        Cancel
+                    <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting}>
+                        Annuler
                     </Button>
                     <Button type="submit" form="create-project-form" disabled={isSubmitting}>
-                        {isSubmitting ? "Creating..." : "Create"}
+                        {isSubmitting ? "Création..." : "Créer"}
                     </Button>
                 </DialogFooter>
             </DialogContent>
