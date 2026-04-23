@@ -1,5 +1,6 @@
 import React from 'react';
 import { CreateProjectModal } from '../modal/create_project_modal';
+import { AddMemberModal } from '../modal/add_member_modal'; // IMPORT TEMPORAIRE POUR TESTER
 
 const DashboardHeader = ({ 
     isCreateModalOpen, 
@@ -14,6 +15,9 @@ const DashboardHeader = ({
             </h1>
 
             <div className="flex items-center gap-4 w-full sm:w-auto">
+                {/* BOUTON TEMPORAIRE POUR VISUALISER LA MODALE ADD MEMBER */}
+                <AddMemberModal projectId="TEST-123" />
+
                 {/* Bouton Créer Projet */}
                 <CreateProjectModal 
                     isOpen={isCreateModalOpen} 
