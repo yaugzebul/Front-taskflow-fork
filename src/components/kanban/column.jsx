@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useDroppable } from '@dnd-kit/core'; // Import useDroppable
+import { useDroppable } from '@dnd-kit/core'; 
 import { TaskCard } from "@/components/kanban/TaskCard.jsx";
 
 export function Column({ id, tasks, onTaskDeleted }) {
@@ -22,8 +22,10 @@ export function Column({ id, tasks, onTaskDeleted }) {
             }`}
         >
             <h2 className="font-bold text-slate-700 mb-1 px-2">{id}</h2>
+            
+            {/* SortableContext enveloppe TOUTE la zone de dépôt, même vide */}
             <SortableContext id={id} items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-                <div className="flex-1 flex flex-col gap-3">
+                <div className="flex-1 flex flex-col gap-3 min-h-[200px]">
                     {tasks.map((task) => (
                         <TaskCard
                             key={task.id}
@@ -32,9 +34,10 @@ export function Column({ id, tasks, onTaskDeleted }) {
                             onTaskDeleted={onTaskDeleted}
                         />
                     ))}
+                    {/* Placeholder invisible mais droppable si la colonne est vide */}
                     {tasks.length === 0 && (
-                        <div className="flex-1 min-h-[200px] border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center text-slate-400">
-                            Déposer une tâche ici
+                        <div className="flex-1 rounded-xl flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-300 pointer-events-none">
+                            Déposer ici
                         </div>
                     )}
                 </div>

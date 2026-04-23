@@ -1,11 +1,10 @@
 "use client"
 
-import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef, useRef } from 'react';
 import {
     DndContext,
     closestCorners,
     pointerWithin,
-    rectIntersection,
     useSensor,
     useSensors,
     PointerSensor,
@@ -13,9 +12,9 @@ import {
     DragOverlay
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { Column } from './Column';
+import { Column } from './column';
 import { getTasksByProject, updateTaskStatus } from '@/services/api.js';
-import { TaskCard } from "@/components/kanban/TaskCard";
+import { TaskCard } from "@/components/kanban/TaskCard.jsx";
 
 const colIdToStatus = {
     1: "À faire",
@@ -40,7 +39,9 @@ export const Board = forwardRef(({ projectId }, ref) => {
     const [activeTask, setActiveTask] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [overId, setOverId] = useState(null);
+
+    // Ref pour mémoriser la colonne de départ lors d'un drag
+    const activeTaskOriginalColumn = useRef(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -53,7 +54,7 @@ export const Board = forwardRef(({ projectId }, ref) => {
         })
     );
 
-    // Stratégie de collision personnalisée
+    // Stratégie de collision personnalisée pour permettre le drop sur une colonne vide
     const customCollisionDetection = (args) => {
         // D'abord, détecter avec closestCorners pour les tâches
         const closestCornerCollisions = closestCorners(args);
@@ -148,117 +149,164 @@ export const Board = forwardRef(({ projectId }, ref) => {
         const { active } = event;
         const task = findTaskById(active.id);
         setActiveTask(task);
+        // On mémorise la colonne de départ pour la MAJ API
+        activeTaskOriginalColumn.current = task ? task.status : null;
     };
 
     const handleDragOver = (event) => {
-        const { over } = event;
-        if (over) {
-            setOverId(over.id);
+        const { active, over } = event;
+        if (!over) return;
+
+        const activeId = active.id;
+        const overId = over.id;
+
+        // On utilise la fonction générique
+        const activeContainer = findTaskById(activeId)?.status;
+        
+        let overContainer;
+        // Si over est une colonne
+        if (over.data.current?.type === 'COLUMN') {
+            overContainer = over.data.current.columnId;
+        } else {
+            // Si over est une tâche
+            overContainer = findTaskById(overId)?.status;
         }
+
+        if (!activeContainer || !overContainer || activeContainer === overContainer) {
+            return;
+        }
+
+        setColumns((prev) => {
+            // Copie profonde des tableaux (Résout l'erreur de mutation React)
+            const activeItems = [...prev[activeContainer]];
+            const overItems = [...prev[overContainer]];
+
+            const activeIndex = activeItems.findIndex((item) => item.id === activeId);
+            const overIndex = over.data.current?.type === 'COLUMN' ? overItems.length : overItems.findIndex((item) => item.id === overId);
+
+            let newIndex;
+            if (over.data.current?.type === 'COLUMN') {
+                newIndex = overItems.length + 1;
+            } else {
+                const isBelowOverItem = over && active.rect.current.translated && active.rect.current.translated.top > over.rect.top + over.rect.height;
+                const modifier = isBelowOverItem ? 1 : 0;
+                newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
+            }
+
+            // On retire de l'ancienne colonne et on met à jour les propriétés de la tâche
+            const [movedItem] = activeItems.splice(activeIndex, 1);
+            const newMovedItem = { ...movedItem, status: overContainer, col_id: statusToColId[overContainer] };
+            
+            // On insère dans la nouvelle colonne
+            overItems.splice(newIndex, 0, newMovedItem);
+
+            return {
+                ...prev,
+                [activeContainer]: activeItems,
+                [overContainer]: overItems,
+            };
+        });
     };
 
     const handleDragEnd = async (event) => {
         setActiveTask(null);
-        setOverId(null);
         const { active, over } = event;
 
         if (!over) {
-            console.log('No over target');
+            activeTaskOriginalColumn.current = null;
             return;
         }
 
-        const activeContainer = active.data.current?.sortable?.containerId;
+        const activeId = active.id;
+        const overId = over.id;
 
-        // Déterminer le container de destination
+        const activeContainer = findTaskById(activeId)?.status;
+        
         let overContainer;
-
-        // Si on drop directement sur une colonne
+        // CORRECTION MAJEURE ICI : gestion robuste du drop
         if (over.data.current?.type === 'COLUMN') {
             overContainer = over.data.current.columnId;
-        }
-        // Si on drop sur une tâche
-        else if (over.data.current?.sortable?.containerId) {
-            overContainer = over.data.current.sortable.containerId;
-        }
-        // Si over.id est directement une colonne (fallback)
-        else if (Object.keys(columns).includes(over.id)) {
-            overContainer = over.id;
-        }
-        else {
-            overContainer = over.id;
+        } else {
+            overContainer = findTaskById(overId)?.status;
         }
 
-        console.log('Drag end:', {
-            activeId: active.id,
-            overId: over.id,
-            activeContainer,
-            overContainer,
-            overType: over.data.current?.type,
-            overData: over.data.current
-        });
+        // Fallback ultime : si on drop sur l'ID de la colonne direct (le conteneur sortable)
+        if (!overContainer && Object.keys(columns).includes(String(over.id))) {
+            overContainer = String(over.id);
+        }
 
         if (!activeContainer || !overContainer) {
-            console.log('Missing container:', { activeContainer, overContainer });
-            return;
-        }
-        if (activeContainer === overContainer && active.id === over.id) {
-            console.log('Same position, no change');
+            activeTaskOriginalColumn.current = null;
             return;
         }
 
-        const previousColumns = JSON.parse(JSON.stringify(columns));
-
-        if (activeContainer === overContainer && over.data.current?.type !== 'COLUMN') {
-            // Réorganisation dans la même colonne
-            const items = columns[activeContainer];
-            const oldIndex = items.findIndex((t) => t.id === active.id);
-            const newIndex = items.findIndex((t) => t.id === over.id);
-
-            if (oldIndex !== -1 && newIndex !== -1) {
-                setColumns(prev => ({
+        // Réorganisation au sein de la même colonne
+        if (activeContainer === overContainer) {
+            const activeItems = columns[activeContainer];
+            const oldIndex = activeItems.findIndex((item) => item.id === activeId);
+            const newIndex = activeItems.findIndex((item) => item.id === overId);
+            
+            if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+                setColumns((prev) => ({
                     ...prev,
-                    [activeContainer]: arrayMove(items, oldIndex, newIndex)
+                    [activeContainer]: arrayMove(activeItems, oldIndex, newIndex),
                 }));
             }
-        } else if (activeContainer !== overContainer || over.data.current?.type === 'COLUMN') {
-            // Déplacement vers une autre colonne
-            const activeItems = [...columns[activeContainer]];
-            const overItems = [...columns[overContainer]];
-            const activeIndex = activeItems.findIndex((t) => t.id === active.id);
+        } else {
+            // S'il y a eu drop direct (sans onDragOver intermédiaire, ex: click rapide)
+            // on effectue le déplacement physique
+            setColumns((prev) => {
+                const activeItems = [...prev[activeContainer]];
+                const overItems = [...prev[overContainer]];
 
-            if (activeIndex === -1) return;
+                const activeIndex = activeItems.findIndex((item) => item.id === activeId);
+                if(activeIndex === -1) return prev;
 
-            const [movedItem] = activeItems.splice(activeIndex, 1);
-            movedItem.status = overContainer;
-            movedItem.col_id = statusToColId[overContainer];
+                const [movedItem] = activeItems.splice(activeIndex, 1);
+                movedItem.status = overContainer;
+                movedItem.col_id = statusToColId[overContainer];
 
-            // Si over.id est l'ID de la colonne (pas d'une tâche), ajouter à la fin
-            const overIndex = overItems.findIndex((t) => t.id === over.id);
-            if (overIndex >= 0) {
-                overItems.splice(overIndex, 0, movedItem);
-            } else {
-                // Colonne vide ou drop sur la colonne elle-même
-                overItems.push(movedItem);
-            }
+                let newIndex;
+                if (over.data.current?.type === 'COLUMN' || Object.keys(columns).includes(String(over.id))) {
+                    newIndex = overItems.length;
+                } else {
+                    const overIndex = overItems.findIndex((item) => item.id === overId);
+                    newIndex = overIndex >= 0 ? overIndex : overItems.length;
+                }
 
-            console.log('Moving task:', { from: activeContainer, to: overContainer, task: movedItem.title });
+                overItems.splice(newIndex, 0, movedItem);
 
-            setColumns({
-                ...columns,
-                [activeContainer]: activeItems,
-                [overContainer]: overItems
+                return {
+                    ...prev,
+                    [activeContainer]: activeItems,
+                    [overContainer]: overItems,
+                };
             });
+        }
 
-            console.log('Updating task with:', { taskId: active.id, status: overContainer });
+        // Si la colonne finale est différente de celle du début du drag -> API
+        if (activeTaskOriginalColumn.current && activeTaskOriginalColumn.current !== overContainer) {
+            // L'erreur 500 avec "Le statut '1' ne correspond à aucune colonne." montre que le backend
+            // s'attend à recevoir l'ID de la colonne (1, 2, ou 3) MAIS il s'attend très probablement
+            // à ce qu'il soit envoyé sous un nom de variable précis.
+            // Puisque tu avais { status: newColId } avant dans l'API, le backend lit req.body.status
+            // et vérifie probablement si ça vaut '1', '2', ou '3'.
+
+            const newColId = statusToColId[overContainer];
+            
             try {
-                await updateTaskStatus(active.id, overContainer);
-                console.log('Task updated successfully');
+                // Appel API
+                await updateTaskStatus(activeId, newColId);
             } catch (err) {
-                console.error('Error updating task:', err);
-                setColumns(previousColumns);
-                alert("Erreur: Impossible de déplacer la tâche.");
+                console.error(err);
+                alert("Erreur: Impossible de déplacer la tâche sur le serveur.");
+                
+                // On s'assure d'attendre la fin de la récupération
+                await fetchTasks();
             }
         }
+        
+        activeTaskOriginalColumn.current = null;
     };
 
     if (isLoading) return <div className="p-10 text-center text-lg">Chargement des tâches...</div>;
@@ -273,7 +321,7 @@ export const Board = forwardRef(({ projectId }, ref) => {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex gap-6 p-10">
+            <div className="flex gap-6 p-10 h-full overflow-x-auto">
                 {Object.keys(columns).map((columnId) => (
                     <Column
                         key={columnId}

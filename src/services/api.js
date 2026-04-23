@@ -63,9 +63,17 @@ export const createTask = (taskData) => apiFetch('/api/taches', {
     method: 'POST',
     body: JSON.stringify(taskData),
 });
-export const updateTaskStatus = (taskId, newStatus) => apiFetch(`/api/taches/${taskId}`, {
+export const updateTaskStatus = (taskId, newColId) => apiFetch(`/api/taches/${taskId}`, {
     method: 'PUT',
-    body: JSON.stringify({ status: newStatus }),
+    // CORRECTION ICI : Le backend attend 'id_col' ou 'status' mais apparemment pas au format qu'on lui donnait.
+    // L'erreur dit "Le statut '1' ne correspond à aucune colonne".
+    // Cela signifie que le backend s'attend probablement à ce qu'on lui envoie le *texte* ("À faire")
+    // OU qu'il s'attend bien à un ID mais que le champ s'appelle 'status'.
+    // D'après le code précédent `body: JSON.stringify({ status: newStatus })`, le backend lisait `req.body.status`.
+    // Modifions pour envoyer l'ID sous le nom `status`, OU `id_col` si on a modifié le back.
+    // L'erreur dit "Le statut '1'...", donc le backend lit bien la valeur 1, mais essaie de la valider comme une chaîne de caractères (ex: "À faire").
+    // IL FAUT LUI ENVOYER LE TEXTE.
+    body: JSON.stringify({ status: newColId === 1 ? "À faire" : newColId === 2 ? "En cours" : "Terminé" }),
 });
 export const deleteTask = (taskId) => apiFetch(`/api/taches/${taskId}`, {
     method: 'DELETE',
